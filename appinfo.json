@@ -1,0 +1,19 @@
+{
+  "uuid": "d3321e7e-4f5c-410f-970a-fd881f35f660",
+  "shortName": "Work Out",
+  "longName": "Work Out",
+  "companyName": "Samuel Rinnetmaki",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt"],
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
