@@ -118,12 +118,23 @@ static void reset(void) {
   working = 0;
   resting = 0;
   paused = 0;
+  current_routine = 0;
   lap = 0;
   seconds = default_work;
-  show_time();
+  text_layer_set_background_color(time_layer, work_bg);
+  text_layer_set_text_color(time_layer, work_text);
+  text_layer_set_background_color(routine_layer, work_bg);
+  text_layer_set_text_color(routine_layer, work_text);
+  text_layer_set_background_color(lap_layer, work_bg);
+  text_layer_set_text_color(lap_layer, work_text);
+  text_layer_set_background_color(next_layer, work_bg);
+  text_layer_set_text_color(next_layer, work_text);
+  text_layer_set_text(routine_layer, empty);
   static char next_text[20];
   snprintf(next_text, sizeof(next_text), "Next: %s", routine[current_routine]);
   text_layer_set_text(next_layer, next_text);
+  show_time();
+  update_lap_text();
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -140,12 +151,17 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     show_time();
     text_layer_set_text(next_layer, empty);
     text_layer_set_text(routine_layer, routine[current_routine]);
+    if (timer) {
+      app_timer_cancel(timer);
+    }
     timer = app_timer_register(timer_interval_ms, timer_callback, NULL);
   }
   else {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Pause: %02d", seconds);
     paused = 1;
-    app_timer_cancel(timer);
+    if (timer) {
+      app_timer_cancel(timer);
+    }
     text_layer_set_text(next_layer, "SEL to continue");
   }
 }
@@ -153,12 +169,15 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Restart: %02d", seconds);
   vibes_short_pulse();
-  app_timer_cancel(timer);
+  if (timer) {
+    app_timer_cancel(timer);
+  }
   seconds = default_work;
   working = 0;
   resting = 0;
   paused = 0;
-  timer = app_timer_register(timer_interval_ms, timer_callback, NULL);
+  // timer = app_timer_register(timer_interval_ms, timer_callback, NULL);
+  text_layer_set_text(next_layer, empty);
   show_time();
 }
 
