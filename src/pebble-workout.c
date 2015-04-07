@@ -52,8 +52,13 @@ static void show_time(void) {
 static void update_lap_text(void) {
   static char lap_text[20];
   // break into two text fields?
-  snprintf(lap_text, sizeof(lap_text), "%d/%d     Lap %d", current_routine+1, routines, lap);
-  text_layer_set_text(lap_layer, lap_text);
+  if (lap) {
+    snprintf(lap_text, sizeof(lap_text), "%d/%d     Lap %d", current_routine+1, routines, lap);
+    text_layer_set_text(lap_layer, lap_text);
+  }
+  else {
+    text_layer_set_text(lap_layer, empty);
+  }
 }
 
 static void timer_callback(void *data) {
@@ -139,8 +144,8 @@ static void reset(void) {
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (paused || (seconds < 0) || ((working == 0) && (resting == 0))) {
-    if (paused == 0) {
-      lap++;
+    if (lap == 0) {
+      lap = 1;
       update_lap_text();
     }
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Start: %02d", seconds);
