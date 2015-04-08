@@ -34,7 +34,6 @@ static void show_time(void) {
   static char time_text[4];
   snprintf(time_text, sizeof(time_text), "%02d", seconds);
   text_layer_set_text(time_layer, time_text);
-/*
   if (working || resting) {
     if (seconds == 0) {
       vibes_long_pulse();
@@ -46,7 +45,6 @@ static void show_time(void) {
       vibes_short_pulse();
     }
   }
-*/
 }
 
 static void update_lap_text(void) {
@@ -59,6 +57,12 @@ static void update_lap_text(void) {
   else {
     text_layer_set_text(lap_layer, empty);
   }
+}
+
+static void update_next_text(int index) {
+  static char next_text[20];
+  snprintf(next_text, sizeof(next_text), "Next: %s", routine[index]);
+  text_layer_set_text(next_layer, next_text);
 }
 
 static void timer_callback(void *data) {
@@ -84,10 +88,8 @@ static void timer_callback(void *data) {
       if (next_routine >= routines) {
         next_routine = 0;
       }
-      static char next_text[20];
-      snprintf(next_text, sizeof(next_text), "Next: %s", routine[next_routine]);
-      text_layer_set_text(next_layer, next_text);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Changed mode to Rest, next %s", routine[current_routine]);
+      update_next_text(next_routine);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Changed mode to Rest, next %s", routine[next_routine]);
     }
     else {
       text_layer_set_background_color(time_layer, work_bg);
@@ -135,14 +137,12 @@ static void reset(void) {
   text_layer_set_background_color(next_layer, work_bg);
   text_layer_set_text_color(next_layer, work_text);
   text_layer_set_text(routine_layer, empty);
-  static char next_text[20];
-  snprintf(next_text, sizeof(next_text), "Next: %s", routine[current_routine]);
-  text_layer_set_text(next_layer, next_text);
   show_time();
+  update_next_text(current_routine);
   update_lap_text();
 }
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void start_or_pause(ClickRecognizerRef recognizer, void *context) {
   if (paused || (seconds < 0) || ((working == 0) && (resting == 0))) {
     if (lap == 0) {
       lap = 1;
@@ -170,32 +170,73 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     text_layer_set_text(next_layer, "SEL to continue");
   }
 }
+static void stop(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Stop: %02d", seconds);
+  vibes_short_pulse();
+  reset();
+}
+static void stop_message(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Reset... %02d", seconds);
+  text_layer_set_text(next_layer, "Reset");
+}
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Restart: %02d", seconds);
+static void skip_back(ClickRecognizerRef recognizer, void *context) {
   vibes_short_pulse();
   if (timer) {
     app_timer_cancel(timer);
+  }
+  if ((seconds == default_work) && ((lap > 1) || (current_routine > 1))) {
+    current_routine--;
+    if (current_routine < 0) {
+      current_routine = routines - 1;
+      lap--;
+    }
   }
   seconds = default_work;
   working = 0;
   resting = 0;
   paused = 0;
-  // timer = app_timer_register(timer_interval_ms, timer_callback, NULL);
-  text_layer_set_text(next_layer, empty);
+  text_layer_set_text(routine_layer, empty);
+  update_next_text(current_routine);
   show_time();
+  update_lap_text();
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skip back to lap %d, routine %d/%d", lap, current_routine, routines);
+}
+static void skip_back_message(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skipping back... %02d", seconds);
+  text_layer_set_text(next_layer, "Skip back");
 }
 
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Stop: %02d", seconds);
+static void skip(ClickRecognizerRef recognizer, void *context) {
   vibes_short_pulse();
-  reset();
+  if (timer) {
+    app_timer_cancel(timer);
+  }
+  current_routine++;
+  if (current_routine >= routines) {
+    current_routine = 0;
+    lap++;
+  }
+  seconds = default_work;
+  working = 0;
+  resting = 0;
+  paused = 0;
+  text_layer_set_text(routine_layer, empty);
+  update_next_text(current_routine);
+  show_time();
+  update_lap_text();
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skip to lap %d, routine %d/%d", lap, current_routine, routines);
+}
+static void skip_message(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skipping...");
+  text_layer_set_text(next_layer, "Skip routine");
 }
 
 static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, start_or_pause);
+  window_long_click_subscribe(BUTTON_ID_UP, 0, skip_back_message, skip_back);
+  window_long_click_subscribe(BUTTON_ID_DOWN, 0, skip_message, skip);
+  window_long_click_subscribe(BUTTON_ID_SELECT, 0, stop_message, stop);
 }
 
 /*
@@ -242,29 +283,29 @@ static void window_load(Window *window) {
   lap_layer = text_layer_create(GRect(0, 0, bounds.size.w, 30));
   text_layer_set_font(lap_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(lap_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(lap_layer, work_bg);
-  text_layer_set_text_color(lap_layer, work_text);
+  text_layer_set_background_color(lap_layer, rest_bg);
+  text_layer_set_text_color(lap_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(lap_layer));
 
   time_layer = text_layer_create(GRect(0, 30, bounds.size.w, 80));
   text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(time_layer, work_bg);
-  text_layer_set_text_color(time_layer, work_text);
+  text_layer_set_background_color(time_layer, rest_bg);
+  text_layer_set_text_color(time_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(time_layer));
 
   routine_layer = text_layer_create(GRect(0, bounds.size.h-60, bounds.size.w, 30));
   text_layer_set_font(routine_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(routine_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(routine_layer, work_bg);
-  text_layer_set_text_color(routine_layer, work_text);
+  text_layer_set_background_color(routine_layer, rest_bg);
+  text_layer_set_text_color(routine_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(routine_layer));
 
   next_layer = text_layer_create(GRect(0, bounds.size.h-30, bounds.size.w, 30));
   text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(next_layer, work_bg);
-  text_layer_set_text_color(next_layer, work_text);
+  text_layer_set_background_color(next_layer, rest_bg);
+  text_layer_set_text_color(next_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(next_layer));
 
   reset();
@@ -288,9 +329,9 @@ static void init(void) {
 
 #ifdef PBL_COLOR
   rest_bg = GColorDukeBlue;
-  rest_text = GColorDukeBlue;
-  work_bg = GColorDukeBlue;
-  work_text = GColorDukeBlue;
+  rest_text = GColorWhite;
+  work_bg = GColorOrange;
+  work_text = GColorWhite;
 #else
   rest_bg = GColorWhite;
   rest_text = GColorBlack;
