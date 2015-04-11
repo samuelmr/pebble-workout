@@ -1,4 +1,6 @@
 #include <pebble.h>
+#define MAX_ROUTINES 20
+#define ROUTINE_LENGTH 20
 static Window *window;
 static TextLayer *routine_layer;
 static TextLayer *time_layer;
@@ -6,10 +8,14 @@ static TextLayer *lap_layer;
 static TextLayer *next_layer;
 static AppTimer *timer;
 static const uint16_t timer_interval_ms = 1000;
-static const uint32_t WORK_KEY = 1 << 1;
-static const uint32_t REST_KEY = 1 << 2;
-static const uint32_t REPEAT_KEY = 1 << 3;
-static const uint32_t ROUTINES_KEY = 1 << 4;
+
+enum MessageKey {
+  WORK = 0,      // TUPLE_INT
+  REST = 1,      // TUPLE_INT
+  REPEAT = 2,    // TUPLE_INT
+  ROUTINES = 3,  // TUPLE_INT
+};
+
 int seconds;
 int default_work;
 int default_rest;
@@ -24,7 +30,7 @@ GColor work_text;
 GColor rest_bg;
 GColor rest_text;
 
-char routine[20][20];
+char routine[MAX_ROUTINES][ROUTINE_LENGTH];
 int routines;
 int current_routine;
 int lap;
@@ -239,42 +245,36 @@ static void click_config_provider(void *context) {
   window_long_click_subscribe(BUTTON_ID_SELECT, 0, stop_message, stop);
 }
 
-/*
 void in_received_handler(DictionaryIterator *received, void *context) {
+  Tuple *wt = dict_find(received, WORK);
+  default_work = wt->value->int8;
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured work to: %d", default_work);
 
-  Tuple *msg_type = dict_read_first(received);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Got message from phone: %s", msg_type->value->cstring);
-  if (strcmp(msg_type->value->cstring, time_key) == 0) {
-    Tuple *hrs = dict_find(received, 1);
-    default_hours = hrs->value->int8;
-    Tuple *mins = dict_find(received, 2);
-    default_minutes = mins->value->int8;
-    Tuple *secs = dict_find(received, 3);
-    default_seconds = secs->value->int8;
-	reset();
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "New config: %d:%02d:%02d", hours, minutes, seconds);
-  }
-  else {
-    Tuple *val = dict_read_next(received);
-    if (strcmp(msg_type->value->cstring, long_key) == 0) {
-      strcpy(default_long_vibes, val->value->cstring);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Set long vibes to: %s", default_long_vibes);
+  Tuple *rt = dict_find(received, REST);
+  default_rest = rt->value->int8;
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured rest to: %d", default_rest);
+
+  Tuple *et = dict_find(received, REPEAT);
+  default_repeat = et->value->int8;
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured repeat to %d times", default_repeat);
+
+  Tuple *ct = dict_find(received, ROUTINES);
+  routines = (ct->value->int8 < MAX_ROUTINES) ? ct->value->int8 : MAX_ROUTINES;
+
+  for (int i=0; i<routines; i++) {
+    if (i > MAX_ROUTINES) {
+      break;
     }
-    else if (strcmp(msg_type->value->cstring, single_key) == 0) {
-      strcpy(default_single_vibes, val->value->cstring);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Set single vibes to: %s", default_single_vibes);
-    }
-    else if (strcmp(msg_type->value->cstring, double_key) == 0) {
-      strcpy(default_double_vibes, val->value->cstring);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Set double vibes to: %s", default_double_vibes);
-    }
-  }
+    Tuple *ro = dict_find(received, 1 + ROUTINES + i);
+    strcpy(routine[i], ro->value->cstring);
+  };
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured %d routines", routines);
+  reset();
 }
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Message from phone dropped: %d", reason);
 }
-*/
 
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
@@ -319,13 +319,9 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
-/*
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
-  const uint32_t inbound_size = 128;
-  const uint32_t outbound_size = 128;
-  app_message_open(inbound_size, outbound_size);
-*/
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
 #ifdef PBL_COLOR
   rest_bg = GColorDukeBlue;
@@ -344,13 +340,13 @@ static void init(void) {
   repeats = 0;
   current_routine = 0;
   lap = 0;
-  default_work = persist_exists(WORK_KEY) ? persist_read_int(WORK_KEY) : 90;
+  default_work = 90;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised work to: %d", default_work);
-  default_rest = persist_exists(REST_KEY) ? persist_read_int(REST_KEY) : 30;
+  default_rest = 30;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised rest to: %d", default_rest);
-  default_repeat = persist_exists(REPEAT_KEY) ? persist_read_int(REPEAT_KEY) : 4;
+  default_repeat = 4;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised repeat to %d times", default_repeat);
-  routines = persist_exists(ROUTINES_KEY) ? persist_read_int(ROUTINES_KEY) : 4;
+  routines = 4;
   strcpy(routine[0], "Push-ups");
   strcpy(routine[1], "Sit-ups");
   strcpy(routine[2], "Lunges");
@@ -368,9 +364,6 @@ static void init(void) {
 }
 
 static void deinit(void) {
-  persist_write_int(WORK_KEY, default_work);
-  persist_write_int(REST_KEY, default_rest);
-  persist_write_int(REPEAT_KEY, default_repeat);
   window_destroy(window);
 }
 
