@@ -118,13 +118,13 @@ function sendConfig(f) {
  conf["routines"] = [];
  for (var i=0; i<inputs.length; i++) {
   if (inputs[i].name == "worktime") {
-    conf['work'] = inputs[i].value;
+    conf['work'] = parseInt(inputs[i].value);
   }
   else if (inputs[i].name == 'resttime') {
-    conf['rest'] = inputs[i].value;
+    conf['rest'] = parseInt(inputs[i].value);
   }
   else if (inputs[i].name == 'repeat') {
-    conf['repeat'] = inputs[i].value;
+    conf['repeat'] = parseInt(inputs[i].value);
   }
   else if (inputs[i].type != "submit") {
     conf['routines'].push(inputs[i].value);
