@@ -93,17 +93,17 @@
 </header>
 <fieldset>
 <legend>Timing</legend>
-<p><label for="worktime">Work: </label> <input id="worktime" name="worktime" value="90" size="4" /> seconds</p>
-<p><label for="resttime">Rest: </label> <input id="resttime" name="resttime" value="30" size="4" /> seconds</p>
-<p><label for="repeat">Repeat: </label> <input id="repeat" name="repeat" value="4" size="4" /> times</p>
+<p><label for="worktime">Work: </label> <input id="worktime" name="worktime" value="90" type="number" step="1" min="1" max="255" /> seconds</p>
+<p><label for="resttime">Rest: </label> <input id="resttime" name="resttime" value="30" type="number" step="1" min="1" max="255" /> seconds</p>
+<p><label for="repeat">Repeat: </label> <input id="repeat" name="repeat" value="4" type="number" step="1" min="1" max="255" /> times</p>
 </fieldset>
 <fieldset>
 <legend>Routines</legend>
 <ol>
-<li><input name="routine" value="Push-ups" size="20" maxlength="19" /></li>
-<li><input name="routine" value="Sit-ups" size="20" maxlength="19" /></li>
-<li><input name="routine" value="Lunges" size="20" maxlength="19" /></li>
-<li><input name="routine" value="Pull-ups" size="20" maxlength="19" /></li>
+<li><input name="routine" value="Push-ups" size="20" maxlength="20" /></li>
+<li><input name="routine" value="Sit-ups" size="20" maxlength="20" /></li>
+<li><input name="routine" value="Lunges" size="20" maxlength="20" /></li>
+<li><input name="routine" value="Pull-ups" size="20" maxlength="20" /></li>
 <li class="button"><button onclick="clone(this); return false;">+</button> <button onclick="destroy(this); return false;">&minus;</button></li>
 </fieldset>
 <fieldset>
