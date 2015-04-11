@@ -21,6 +21,8 @@ int default_work;
 int default_rest;
 int default_repeat;
 char *time_key;
+static const char work[5] = "work";
+static const char rest[5] = "rest";
 int working;
 int resting;
 int paused;
@@ -71,6 +73,30 @@ static void update_next_text(int index) {
   text_layer_set_text(next_layer, next_text);
 }
 
+static void set_colors(const char *mode) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting color scheme to %s", mode);
+  if (strcmp(mode, work) == 0) {
+    text_layer_set_background_color(time_layer, work_bg);
+    text_layer_set_text_color(time_layer, work_text);
+    text_layer_set_background_color(routine_layer, work_bg);
+    text_layer_set_text_color(routine_layer, work_text);
+    text_layer_set_background_color(lap_layer, work_bg);
+    text_layer_set_text_color(lap_layer, work_text);
+    text_layer_set_background_color(next_layer, work_bg);
+    text_layer_set_text_color(next_layer, work_text);
+  }
+  else {
+    text_layer_set_background_color(time_layer, rest_bg);
+    text_layer_set_text_color(time_layer, rest_text);
+    text_layer_set_background_color(routine_layer, rest_bg);
+    text_layer_set_text_color(routine_layer, rest_text);
+    text_layer_set_background_color(lap_layer, rest_bg);
+    text_layer_set_text_color(lap_layer, rest_text);
+    text_layer_set_background_color(next_layer, rest_bg);
+    text_layer_set_text_color(next_layer, rest_text);
+  }
+}
+
 static void timer_callback(void *data) {
 
   // APP_LOG(APP_LOG_LEVEL_DEBUG, "Timer: %02d", seconds);
@@ -78,14 +104,7 @@ static void timer_callback(void *data) {
   seconds--;
   if (seconds <= 0) {
     if (working) {
-      text_layer_set_background_color(time_layer, rest_bg);
-      text_layer_set_text_color(time_layer, rest_text);
-      text_layer_set_background_color(routine_layer, rest_bg);
-      text_layer_set_text_color(routine_layer, rest_text);
-      text_layer_set_background_color(lap_layer, rest_bg);
-      text_layer_set_text_color(lap_layer, rest_text);
-      text_layer_set_background_color(next_layer, rest_bg);
-      text_layer_set_text_color(next_layer, rest_text);
+      set_colors(rest);
       working = 0;
       resting = 1;
       seconds = default_rest;
@@ -98,14 +117,7 @@ static void timer_callback(void *data) {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "Changed mode to Rest, next %s", routine[next_routine]);
     }
     else {
-      text_layer_set_background_color(time_layer, work_bg);
-      text_layer_set_text_color(time_layer, work_text);
-      text_layer_set_background_color(routine_layer, work_bg);
-      text_layer_set_text_color(routine_layer, work_text);
-      text_layer_set_background_color(lap_layer, work_bg);
-      text_layer_set_text_color(lap_layer, work_text);
-      text_layer_set_background_color(next_layer, work_bg);
-      text_layer_set_text_color(next_layer, work_text);
+      set_colors(work);
       working = 1;
       resting = 0;
       seconds = default_work;
@@ -134,14 +146,7 @@ static void reset(void) {
   current_routine = 0;
   lap = 0;
   seconds = default_work;
-  text_layer_set_background_color(time_layer, work_bg);
-  text_layer_set_text_color(time_layer, work_text);
-  text_layer_set_background_color(routine_layer, work_bg);
-  text_layer_set_text_color(routine_layer, work_text);
-  text_layer_set_background_color(lap_layer, work_bg);
-  text_layer_set_text_color(lap_layer, work_text);
-  text_layer_set_background_color(next_layer, work_bg);
-  text_layer_set_text_color(next_layer, work_text);
+  set_colors(rest);
   text_layer_set_text(routine_layer, empty);
   show_time();
   update_next_text(current_routine);
@@ -160,6 +165,7 @@ static void start_or_pause(ClickRecognizerRef recognizer, void *context) {
     paused = 0;
     seconds--;
     show_time();
+    set_colors(work);
     text_layer_set_text(next_layer, empty);
     text_layer_set_text(routine_layer, routine[current_routine]);
     if (timer) {
@@ -202,6 +208,7 @@ static void skip_back(ClickRecognizerRef recognizer, void *context) {
   working = 0;
   resting = 0;
   paused = 0;
+  set_colors(rest);
   text_layer_set_text(routine_layer, empty);
   update_next_text(current_routine);
   show_time();
@@ -227,6 +234,7 @@ static void skip(ClickRecognizerRef recognizer, void *context) {
   working = 0;
   resting = 0;
   paused = 0;
+  set_colors(rest);
   text_layer_set_text(routine_layer, empty);
   update_next_text(current_routine);
   show_time();
@@ -283,29 +291,21 @@ static void window_load(Window *window) {
   lap_layer = text_layer_create(GRect(0, 0, bounds.size.w, 30));
   text_layer_set_font(lap_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(lap_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(lap_layer, rest_bg);
-  text_layer_set_text_color(lap_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(lap_layer));
 
   time_layer = text_layer_create(GRect(0, 30, bounds.size.w, 80));
   text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(time_layer, rest_bg);
-  text_layer_set_text_color(time_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(time_layer));
 
   routine_layer = text_layer_create(GRect(0, bounds.size.h-60, bounds.size.w, 30));
   text_layer_set_font(routine_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(routine_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(routine_layer, rest_bg);
-  text_layer_set_text_color(routine_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(routine_layer));
 
   next_layer = text_layer_create(GRect(0, bounds.size.h-30, bounds.size.w, 30));
   text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
-  text_layer_set_background_color(next_layer, rest_bg);
-  text_layer_set_text_color(next_layer, rest_text);
   layer_add_child(window_layer, text_layer_get_layer(next_layer));
 
   reset();
