@@ -1,13 +1,29 @@
 var initialized = false;
 var messageQueue = [];
+var config = {"work": 90, "rest": 30, "repeat": 4,
+  "routines": ["Push-ups", "Sit-ups", "Lunges", "Pull-ups"]};
 
 Pebble.addEventListener("ready",
   function(e) {
-    config = JSON.parse(localStorage.getItem("config") || "{}");
-    config["work"] = parseInt(config["work"]) || 90;
-    config["rest"] = parseInt(config["rest"]) || 30;
-    config["repeat"] = parseInt(config["repeat"]) || 4;
-    config["routines"] = config["routines"] || ["Push-ups", "Sit-ups", "Lunges", "Pull-ups"];
+    var storedConf = localStorage.getItem("config");
+    if (storedConf && (storedConf.substr(0, 1) == "{")) {
+      var sc;
+      if (sc = JSON.parse(storedConf)) {
+        if (sc["work"] && parseInt(sc["work"])) {
+          config["work"] = sc["work"];
+        }
+        if (sc["rest"] && parseInt(sc["rest"])) {
+          config["rest"] = sc["rest"];
+        }
+        if (sc["repeat"] && parseInt(sc["repeat"])) {
+          config["repeat"] = sc["repeat"];
+        }
+        if (sc["routines"] && (typeof(sc["routines"]) == "Array")) {
+          config["routines"] = sc["routines"];
+        }
+      }
+    }
+    console.log("Initial config: " + JSON.stringify(config));
     console.log("JavaScript app ready and running!");
     initialized = true;
     sendConfig(config);
