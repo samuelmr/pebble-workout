@@ -18,7 +18,7 @@ Pebble.addEventListener("ready",
         if (sc["repeat"] && parseInt(sc["repeat"])) {
           config["repeat"] = sc["repeat"];
         }
-        if (sc["routines"] && (typeof(sc["routines"]) == "Array")) {
+        if (sc["routines"] && sc["routines"].length) {
           config["routines"] = sc["routines"];
         }
       }
@@ -32,7 +32,7 @@ Pebble.addEventListener("ready",
 
 Pebble.addEventListener("showConfiguration",
   function() {
-    var uri = "https://samuelmr.github.io/pebble-workout/configure.html#"+
+    var uri = "https://samuelmr.github.io/pebble-workout/configure.html?conf="+
     encodeURIComponent(JSON.stringify(config));
     console.log("Configuration url: " + uri);
     Pebble.openURL(uri);
