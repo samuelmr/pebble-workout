@@ -327,7 +327,7 @@ static void init(void) {
   rest_bg = GColorDukeBlue;
   rest_text = GColorWhite;
   work_bg = GColorOrange;
-  work_text = GColorWhite;
+  work_text = GColorBlack;
 #else
   rest_bg = GColorWhite;
   rest_text = GColorBlack;
