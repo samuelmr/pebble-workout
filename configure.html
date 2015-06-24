@@ -85,7 +85,7 @@
   padding: 0;
  }
  p#error {
-  background-color: "#FFF";
+  background-color: #FFF;
   border: 2px solid red;
   border-radius: 4px;
   margin: 1em 0;
@@ -200,7 +200,7 @@ function clone(button) {
  }
  var li = button.parentNode;
  var ul = button.parentNode.parentNode;
- if (ul.children.length >= MAX_ROUTINES) {
+ if (ul.children.length > MAX_ROUTINES) {
   var msg = 'Sorry, you can save at most ' + MAX_ROUTINES + ' routines.'
   var p = document.createElement('p');
   p.id = 'error';
