@@ -84,7 +84,7 @@
   margin: 0;
   padding: 0;
  }
- p.error {
+ p#error {
   background-color: "#FFF";
   border: 2px solid red;
   border-radius: 4px;
@@ -193,6 +193,7 @@ function getQueryParam(variable) {
  return false;
 }
 function clone(button) {
+ removeError();
  // alert(button);
  if (!button.parentNode || !button.parentNode.parentNode) {
   return false;
@@ -202,9 +203,10 @@ function clone(button) {
  if (ul.children.length >= MAX_ROUTINES) {
   var msg = 'Sorry, you can save at most ' + MAX_ROUTINES + ' routines.'
   var p = document.createElement('p');
-  p.className = 'error';
+  p.id = 'error';
   p.appendChild(document.createTextNode(msg));
   ul.parentNode.appendChild(p);
+  return false;
  }
  // var obj = li.previousSibling;
  var obj = ul.children[ul.children.length-2];
@@ -214,6 +216,7 @@ function clone(button) {
  return false;
 }
 function destroy(button) {
+ removeError();
  // alert(button);
  if (!button.parentNode || !button.parentNode.parentNode) {
   return false;
@@ -224,6 +227,10 @@ function destroy(button) {
   ol.removeChild(ol.children[ol.children.length-2]);
  }
  return false;
+}
+function removeError() {
+ var p = document.getElementById('error');
+ p.parentNode.removeChild(p);
 }
 </script>
 </body>
