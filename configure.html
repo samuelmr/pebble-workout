@@ -153,8 +153,8 @@ if (confString && (confString.substr(0, 1) == '{')) {
  }
 }
 for (var i=0; i<inputs.length; i++) {
- var val;
- if (val = getQueryParam(inputs[i].name)) {
+ var val = getQueryParam(inputs[i].name);
+ if (val && (val != "undefined")) {
   inputs[i].value = val;
  }
 }
@@ -177,7 +177,7 @@ function sendConfig() {
  }
  // alert(JSON.stringify(conf));
  var return_to = (getQueryParam('return_to') || f.action) +
-                 encodeURIComponent(JSON.stringify(conf));
+  encodeURIComponent(JSON.stringify(conf));
  document.location = return_to;
  return false;
 }
