@@ -230,7 +230,9 @@ function destroy(button) {
 }
 function removeError() {
  var p = document.getElementById('error');
- p.parentNode.removeChild(p);
+ if (p && p.parentNode) {
+  p.parentNode.removeChild(p);
+ }
 }
 </script>
 </body>
