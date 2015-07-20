@@ -1,14 +1,32 @@
 var initialized = false;
 var messageQueue = [];
-var config = {};
+var config = {
+  "work": 90,
+  "rest": 30,
+  "repeat": 4,
+  "routines": ["Push-ups", "Sit-ups", "Lunges", "Pull-ups"]
+};
 
 Pebble.addEventListener("ready",
   function(e) {
-    config = JSON.parse(localStorage.getItem("config") || "{}");
-    config.work = parseInt(config.work) || 90;
-    config.rest = parseInt(config.rest) || 30;
-    config.repeat = parseInt(config.repeat) || 4;
-    config.routines = config.routines || ["Push-ups", "Sit-ups", "Lunges", "Pull-ups"];
+    var storedConf = localStorage.getItem("config");
+    if (storedConf && (storedConf.substr(0, 1) == "{")) {
+      var sc = JSON.parse(storedConf);
+      if (sc) {
+        if (sc.work && parseInt(sc.work)) {
+          config.work = parseInt(sc.work);
+        }
+        if (sc.rest && parseInt(sc.rest)) {
+          config.rest = parseInt(sc.rest);
+        }
+        if (sc.repeat && parseInt(sc.repeat)) {
+          config.repeat = parseInt(sc.repeat);
+        }
+        if (sc.routines && sc.routines.length) {
+          config.routines = sc.routines;
+        }
+      }
+    }
     console.log("JavaScript app ready and running!");
     initialized = true;
     sendConfig(config);
@@ -17,7 +35,7 @@ Pebble.addEventListener("ready",
 
 Pebble.addEventListener("showConfiguration",
   function() {
-    var uri = "https://samuelmr.github.io/pebble-workout/configure.html#"+
+    var uri = "https://samuelmr.github.io/pebble-workout/configure.html?conf="+
     encodeURIComponent(JSON.stringify(config));
     console.log("Configuration url: " + uri);
     Pebble.openURL(uri);
