@@ -1,5 +1,5 @@
 #include <pebble.h>
-#define MAX_ROUTINES 20
+#define MAX_ROUTINES 50
 #define ROUTINE_LENGTH 20
 static Window *window;
 static TextLayer *routine_layer;
@@ -255,15 +255,15 @@ static void click_config_provider(void *context) {
 
 void in_received_handler(DictionaryIterator *received, void *context) {
   Tuple *wt = dict_find(received, WORK);
-  default_work = wt->value->int16;
+  default_work = wt->value->int8;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured work to: %d", default_work);
 
   Tuple *rt = dict_find(received, REST);
-  default_rest = rt->value->int16;
+  default_rest = rt->value->int8;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured rest to: %d", default_rest);
 
   Tuple *et = dict_find(received, REPEAT);
-  default_repeat = et->value->int16;
+  default_repeat = et->value->int8;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured repeat to %d times", default_repeat);
 
   Tuple *ct = dict_find(received, ROUTINES);
@@ -327,7 +327,7 @@ static void init(void) {
   rest_bg = GColorDukeBlue;
   rest_text = GColorWhite;
   work_bg = GColorOrange;
-  work_text = GColorBlack;
+  work_text = GColorWhite;
 #else
   rest_bg = GColorWhite;
   rest_text = GColorBlack;
