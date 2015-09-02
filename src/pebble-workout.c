@@ -1,8 +1,8 @@
 #include <pebble.h>
-#define MAX_ROUTINES 50
-#define ROUTINE_LENGTH 20
+#define MAX_EXERCISES 50
+#define EXERCISE_LENGTH 20
 static Window *window;
-static TextLayer *routine_layer;
+static TextLayer *exercise_layer;
 static TextLayer *time_layer;
 static TextLayer *lap_layer;
 static TextLayer *next_layer;
@@ -13,7 +13,7 @@ enum MessageKey {
   WORK = 0,      // TUPLE_INT
   REST = 1,      // TUPLE_INT
   REPEAT = 2,    // TUPLE_INT
-  ROUTINES = 3,  // TUPLE_INT
+  EXERCISES = 3,  // TUPLE_INT
 };
 
 int seconds;
@@ -32,9 +32,9 @@ GColor work_text;
 GColor rest_bg;
 GColor rest_text;
 
-char routine[MAX_ROUTINES][ROUTINE_LENGTH];
-int routines;
-int current_routine;
+char exercise[MAX_EXERCISES][EXERCISE_LENGTH];
+int exercises;
+int current_exercise;
 int lap;
 static const char empty[2];
 
@@ -59,7 +59,7 @@ static void update_lap_text(void) {
   static char lap_text[20];
   // break into two text fields?
   if (lap) {
-    snprintf(lap_text, sizeof(lap_text), "%d/%d     Lap %d", current_routine+1, routines, lap);
+    snprintf(lap_text, sizeof(lap_text), "%d/%d     Lap %d", current_exercise+1, exercises, lap);
     text_layer_set_text(lap_layer, lap_text);
   }
   else {
@@ -69,7 +69,7 @@ static void update_lap_text(void) {
 
 static void update_next_text(int index) {
   static char next_text[20];
-  snprintf(next_text, sizeof(next_text), "Next: %s", routine[index]);
+  snprintf(next_text, sizeof(next_text), "Next: %s", exercise[index]);
   text_layer_set_text(next_layer, next_text);
 }
 
@@ -78,8 +78,8 @@ static void set_colors(const char *mode) {
   if (strcmp(mode, work) == 0) {
     text_layer_set_background_color(time_layer, work_bg);
     text_layer_set_text_color(time_layer, work_text);
-    text_layer_set_background_color(routine_layer, work_bg);
-    text_layer_set_text_color(routine_layer, work_text);
+    text_layer_set_background_color(exercise_layer, work_bg);
+    text_layer_set_text_color(exercise_layer, work_text);
     text_layer_set_background_color(lap_layer, work_bg);
     text_layer_set_text_color(lap_layer, work_text);
     text_layer_set_background_color(next_layer, work_bg);
@@ -88,8 +88,8 @@ static void set_colors(const char *mode) {
   else {
     text_layer_set_background_color(time_layer, rest_bg);
     text_layer_set_text_color(time_layer, rest_text);
-    text_layer_set_background_color(routine_layer, rest_bg);
-    text_layer_set_text_color(routine_layer, rest_text);
+    text_layer_set_background_color(exercise_layer, rest_bg);
+    text_layer_set_text_color(exercise_layer, rest_text);
     text_layer_set_background_color(lap_layer, rest_bg);
     text_layer_set_text_color(lap_layer, rest_text);
     text_layer_set_background_color(next_layer, rest_bg);
@@ -108,28 +108,28 @@ static void timer_callback(void *data) {
       working = 0;
       resting = 1;
       seconds = default_rest;
-      text_layer_set_text(routine_layer, "Rest");
-      int next_routine = current_routine + 1;
-      if (next_routine >= routines) {
-        next_routine = 0;
+      text_layer_set_text(exercise_layer, "Rest");
+      int next_exercise = current_exercise + 1;
+      if (next_exercise >= exercises) {
+        next_exercise = 0;
       }
-      update_next_text(next_routine);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Changed mode to Rest, next %s", routine[next_routine]);
+      update_next_text(next_exercise);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Changed mode to Rest, next %s", exercise[next_exercise]);
     }
     else {
       set_colors(work);
       working = 1;
       resting = 0;
       seconds = default_work;
-      current_routine++;
-      if (current_routine >= routines) {
+      current_exercise++;
+      if (current_exercise >= exercises) {
         lap++;
-        current_routine = 0;
+        current_exercise = 0;
       }
       update_lap_text();
-      text_layer_set_text(routine_layer, routine[current_routine]);
+      text_layer_set_text(exercise_layer, exercise[current_exercise]);
       text_layer_set_text(next_layer, empty);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Started %s", routine[current_routine]);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Started %s", exercise[current_exercise]);
     }
   }
   timer = app_timer_register(timer_interval_ms, timer_callback, NULL);
@@ -143,13 +143,13 @@ static void reset(void) {
   working = 0;
   resting = 0;
   paused = 0;
-  current_routine = 0;
+  current_exercise = 0;
   lap = 0;
   seconds = default_work;
   set_colors(rest);
-  text_layer_set_text(routine_layer, empty);
+  text_layer_set_text(exercise_layer, empty);
   show_time();
-  update_next_text(current_routine);
+  update_next_text(current_exercise);
   update_lap_text();
 }
 
@@ -167,7 +167,7 @@ static void start_or_pause(ClickRecognizerRef recognizer, void *context) {
     show_time();
     set_colors(work);
     text_layer_set_text(next_layer, empty);
-    text_layer_set_text(routine_layer, routine[current_routine]);
+    text_layer_set_text(exercise_layer, exercise[current_exercise]);
     if (timer) {
       app_timer_cancel(timer);
     }
@@ -197,10 +197,10 @@ static void skip_back(ClickRecognizerRef recognizer, void *context) {
   if (timer) {
     app_timer_cancel(timer);
   }
-  if ((seconds == default_work) && ((lap > 1) || (current_routine > 1))) {
-    current_routine--;
-    if (current_routine < 0) {
-      current_routine = routines - 1;
+  if ((seconds == default_work) && ((lap > 1) || (current_exercise > 1))) {
+    current_exercise--;
+    if (current_exercise < 0) {
+      current_exercise = exercises - 1;
       lap--;
     }
   }
@@ -209,11 +209,11 @@ static void skip_back(ClickRecognizerRef recognizer, void *context) {
   resting = 0;
   paused = 0;
   set_colors(rest);
-  text_layer_set_text(routine_layer, empty);
-  update_next_text(current_routine);
+  text_layer_set_text(exercise_layer, empty);
+  update_next_text(current_exercise);
   show_time();
   update_lap_text();
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skip back to lap %d, routine %d/%d", lap, current_routine, routines);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skip back to lap %d, exercise %d/%d", lap, current_exercise, exercises);
 }
 static void skip_back_message(ClickRecognizerRef recognizer, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Skipping back... %02d", seconds);
@@ -225,9 +225,9 @@ static void skip(ClickRecognizerRef recognizer, void *context) {
   if (timer) {
     app_timer_cancel(timer);
   }
-  current_routine++;
-  if (current_routine >= routines) {
-    current_routine = 0;
+  current_exercise++;
+  if (current_exercise >= exercises) {
+    current_exercise = 0;
     lap++;
   }
   seconds = default_work;
@@ -235,15 +235,15 @@ static void skip(ClickRecognizerRef recognizer, void *context) {
   resting = 0;
   paused = 0;
   set_colors(rest);
-  text_layer_set_text(routine_layer, empty);
-  update_next_text(current_routine);
+  text_layer_set_text(exercise_layer, empty);
+  update_next_text(current_exercise);
   show_time();
   update_lap_text();
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skip to lap %d, routine %d/%d", lap, current_routine, routines);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Skip to lap %d, exercise %d/%d", lap, current_exercise, exercises);
 }
 static void skip_message(ClickRecognizerRef recognizer, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Skipping...");
-  text_layer_set_text(next_layer, "Skip routine");
+  text_layer_set_text(next_layer, "Skip exercise");
 }
 
 static void click_config_provider(void *context) {
@@ -266,17 +266,17 @@ void in_received_handler(DictionaryIterator *received, void *context) {
   default_repeat = et->value->int16;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured repeat to %d times", default_repeat);
 
-  Tuple *ct = dict_find(received, ROUTINES);
-  routines = (ct->value->int8 < MAX_ROUTINES) ? ct->value->int8 : MAX_ROUTINES;
+  Tuple *ct = dict_find(received, EXERCISES);
+  exercises = (ct->value->int8 < MAX_EXERCISES) ? ct->value->int8 : MAX_EXERCISES;
 
-  for (int i=0; i<routines; i++) {
-    if (i > MAX_ROUTINES) {
+  for (int i=0; i<exercises; i++) {
+    if (i > MAX_EXERCISES) {
       break;
     }
-    Tuple *ro = dict_find(received, 1 + ROUTINES + i);
-    strcpy(routine[i], ro->value->cstring);
+    Tuple *ro = dict_find(received, 1 + EXERCISES + i);
+    strcpy(exercise[i], ro->value->cstring);
   };
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured %d routines", routines);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Configured %d exercises", exercises);
   reset();
 }
 
@@ -298,10 +298,10 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(time_layer));
 
-  routine_layer = text_layer_create(GRect(0, bounds.size.h-60, bounds.size.w, 30));
-  text_layer_set_font(routine_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_text_alignment(routine_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(routine_layer));
+  exercise_layer = text_layer_create(GRect(0, bounds.size.h-60, bounds.size.w, 30));
+  text_layer_set_font(exercise_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(exercise_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(exercise_layer));
 
   next_layer = text_layer_create(GRect(0, bounds.size.h-30, bounds.size.w, 30));
   text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
@@ -313,7 +313,7 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   text_layer_destroy(time_layer);
-  text_layer_destroy(routine_layer);
+  text_layer_destroy(exercise_layer);
   text_layer_destroy(next_layer);
   text_layer_destroy(lap_layer);
 }
@@ -338,7 +338,7 @@ static void init(void) {
   working = 0;
   resting = 0;
   repeats = 0;
-  current_routine = 0;
+  current_exercise = 0;
   lap = 0;
   default_work = 90;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised work to: %d", default_work);
@@ -346,12 +346,12 @@ static void init(void) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised rest to: %d", default_rest);
   default_repeat = 4;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised repeat to %d times", default_repeat);
-  routines = 4;
-  strcpy(routine[0], "Push-ups");
-  strcpy(routine[1], "Sit-ups");
-  strcpy(routine[2], "Lunges");
-  strcpy(routine[3], "Pull-ups");
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised %d routines", routines);
+  exercises = 4;
+  strcpy(exercise[0], "Push-ups");
+  strcpy(exercise[1], "Sit-ups");
+  strcpy(exercise[2], "Lunges");
+  strcpy(exercise[3], "Pull-ups");
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialised %d exercises", exercises);
 
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
