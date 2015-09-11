@@ -4,7 +4,7 @@ var config = {
   "work": 90,
   "rest": 30,
   "repeat": 4,
-  "routines": ["Push-ups", "Sit-ups", "Lunges", "Pull-ups"]
+  "exercises": ["Push-ups", "Sit-ups", "Lunges", "Pull-ups"]
 };
 
 Pebble.addEventListener("ready",
@@ -22,8 +22,8 @@ Pebble.addEventListener("ready",
         if (sc.repeat && parseInt(sc.repeat)) {
           config.repeat = parseInt(sc.repeat);
         }
-        if (sc.routines && sc.routines.length) {
-          config.routines = sc.routines;
+        if (sc.exercises && sc.exercises.length) {
+          config.exercises = sc.exercises;
         }
       }
     }
@@ -44,7 +44,7 @@ Pebble.addEventListener("showConfiguration",
 
 Pebble.addEventListener("webviewclosed",
   function(e) {
-    var config = JSON.parse(decodeURIComponent(e.response));
+    config = JSON.parse(decodeURIComponent(e.response));
     console.log("Webview window returned: " + JSON.stringify(config));
     sendConfig(config);
     localStorage.setItem("config", JSON.stringify(config));
@@ -53,13 +53,13 @@ Pebble.addEventListener("webviewclosed",
 
 function sendConfig(config) {
   var msg = {};
-  config.routines = config.routines || []; // just in case
+  config.exercises = config.exercises || []; // just in case
   msg["0"] = parseInt(config.work) || 90;
   msg["1"] = parseInt(config.rest) || 30;
   msg["2"] = parseInt(config.repeat) || 4;
-  msg["3"] = config.routines.length;
-  for (var i=0; i<config.routines.length; i++) {
-    msg[i+4] = config.routines[i];
+  msg["3"] = config.exercises.length;
+  for (var i=0; i<config.exercises.length; i++) {
+    msg[i+4] = config.exercises[i];
   }
   messageQueue.push(msg);
   sendNextMessage();
@@ -81,4 +81,3 @@ function appMessageAck(e) {
 function appMessageNack(e) {
   console.log("Message rejected by Pebble! " + e.error);
 }
-
