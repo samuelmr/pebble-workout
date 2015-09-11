@@ -18,10 +18,10 @@
   max-width: 20em;
  }
  header, fieldset {
-  background: linear-gradient(#ADF, #FFF); /* FF 3.6+ */  
-  background: -moz-linear-gradient(#ADF, #FFF); /* FF 3.6+ */  
-  background: -o-linear-gradient(#ADF, #FFF); /* FF 3.6+ */  
-  background: -webkit-linear-gradient(#ADF, #FFF); /* FF 3.6+ */  
+  background: linear-gradient(#ADF, #FFF); /* FF 3.6+ */
+  background: -moz-linear-gradient(#ADF, #FFF); /* FF 3.6+ */
+  background: -o-linear-gradient(#ADF, #FFF); /* FF 3.6+ */
+  background: -webkit-linear-gradient(#ADF, #FFF); /* FF 3.6+ */
   border-radius: 4px;
   border-width: 0;
   font-size: larger;
@@ -99,11 +99,11 @@
 </fieldset>
 <fieldset>
 <legend>Routines</legend>
-<ol id="routinelist">
-<li><input name="routine" value="Push-ups" size="20" maxlength="20" /></li>
-<li><input name="routine" value="Sit-ups" size="20" maxlength="20" /></li>
-<li><input name="routine" value="Lunges" size="20" maxlength="20" /></li>
-<li><input name="routine" value="Pull-ups" size="20" maxlength="20" /></li>
+<ol id="exerciselist">
+<li><input name="exercise" value="Push-ups" size="20" maxlength="20" /></li>
+<li><input name="exercise" value="Sit-ups" size="20" maxlength="20" /></li>
+<li><input name="exercise" value="Lunges" size="20" maxlength="20" /></li>
+<li><input name="exercise" value="Pull-ups" size="20" maxlength="20" /></li>
 <li class="button"><button onclick="clone(this); return false;">+</button> <button onclick="destroy(this); return false;">&minus;</button></li>
 </ol>
 </fieldset>
@@ -128,15 +128,15 @@ if (confString && (confString.substr(0, 1) == '{')) {
   if (initConf.repeat) {
    f.repeat.value = initConf.repeat;
   }
-  if (initConf.routines && initConf.routines.length) {
-   var ol = document.getElementById('routinelist');
+  if (initConf.exercises && initConf.exercises.length) {
+   var ol = document.getElementById('exerciselist');
    for (var i=ol.children.length-2; i>0; i--) {
     ol.removeChild(ol.children[i]);
    }
-   for (var i=0; i<initConf["routines"].length; i++) {
+   for (var i=0; i<initConf["exercises"].length; i++) {
     var input = ol.children[ol.children.length-2].getElementsByTagName('input')[0];
-    input.value = initConf["routines"][i];
-    if (i < initConf["routines"].length-1) {
+    input.value = initConf["exercises"][i];
+    if (i < initConf["exercises"].length-1) {
      var cloneB = ol.children[ol.children.length-1].getElementsByTagName('button')[0];
      cloneB.onclick();
     }
@@ -152,7 +152,7 @@ for (var i=0; i<inputs.length; i++) {
 }
 function sendConfig() {
  var conf = {};
- conf["routines"] = [];
+ conf["exercises"] = [];
  for (var i=0; i<inputs.length; i++) {
   if (inputs[i].name == "worktime") {
     conf['work'] = parseInt(inputs[i].value);
@@ -164,7 +164,7 @@ function sendConfig() {
     conf['repeat'] = parseInt(inputs[i].value);
   }
   else if (inputs[i].type != "submit") {
-    conf['routines'].push(inputs[i].value);
+    conf['exercises'].push(inputs[i].value);
   }
  }
  // alert(JSON.stringify(conf));
