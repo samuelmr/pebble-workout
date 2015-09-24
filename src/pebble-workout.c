@@ -76,6 +76,7 @@ static void update_next_text(int index) {
 static void set_colors(const char *mode) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting color scheme to %s", mode);
   if (strcmp(mode, work) == 0) {
+    window_set_background_color(window, work_bg);
     text_layer_set_background_color(time_layer, work_bg);
     text_layer_set_text_color(time_layer, work_text);
     text_layer_set_background_color(exercise_layer, work_bg);
@@ -86,6 +87,7 @@ static void set_colors(const char *mode) {
     text_layer_set_text_color(next_layer, work_text);
   }
   else {
+    window_set_background_color(window, rest_bg);
     text_layer_set_background_color(time_layer, rest_bg);
     text_layer_set_text_color(time_layer, rest_text);
     text_layer_set_background_color(exercise_layer, rest_bg);
@@ -288,22 +290,24 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
 
-  lap_layer = text_layer_create(GRect(0, 0, bounds.size.w, 30));
+  int top_margin = (bounds.size.h - 125)/2;
+
+  lap_layer = text_layer_create(GRect(0, top_margin, bounds.size.w, 20));
   text_layer_set_font(lap_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(lap_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(lap_layer));
 
-  time_layer = text_layer_create(GRect(0, 30, bounds.size.w, 80));
+  time_layer = text_layer_create(GRect(0, top_margin+20, bounds.size.w, 50));
   text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(time_layer));
 
-  exercise_layer = text_layer_create(GRect(0, bounds.size.h-60, bounds.size.w, 30));
+  exercise_layer = text_layer_create(GRect(0, top_margin+70, bounds.size.w, 30));
   text_layer_set_font(exercise_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(exercise_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(exercise_layer));
 
-  next_layer = text_layer_create(GRect(0, bounds.size.h-30, bounds.size.w, 30));
+  next_layer = text_layer_create(GRect(0, top_margin+100, bounds.size.w, bounds.size.h-(top_margin+110)));
   text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(next_layer));
