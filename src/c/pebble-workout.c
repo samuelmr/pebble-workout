@@ -8,7 +8,10 @@ static TextLayer *lap_layer;
 static TextLayer *next_layer;
 static AppTimer *timer;
 static const uint16_t timer_interval_ms = 1000;
-
+#ifdef PBL_HEALTH
+static TextLayer *hr_layer;
+#endif
+  
 enum MessageKey {
   WORK = 0,      // TUPLE_INT
   REST = 1,      // TUPLE_INT
@@ -16,26 +19,26 @@ enum MessageKey {
   EXERCISES = 3,  // TUPLE_INT
 };
 
-int seconds;
-int default_work;
-int default_rest;
-int default_repeat;
-char *time_key;
+static int seconds;
+static int default_work;
+static int default_rest;
+static int default_repeat;
+static char *time_key;
 static const char work[5] = "work";
 static const char rest[5] = "rest";
-int working;
-int resting;
-int paused;
-int repeats;
-GColor work_bg;
-GColor work_text;
-GColor rest_bg;
-GColor rest_text;
+static int working;
+static int resting;
+static int paused;
+static int repeats;
+static GColor work_bg;
+static GColor work_text;
+static GColor rest_bg;
+static GColor rest_text;
 
-char exercise[MAX_EXERCISES][EXERCISE_LENGTH];
-int exercises;
-int current_exercise;
-int lap;
+static char exercise[MAX_EXERCISES][EXERCISE_LENGTH];
+static int exercises;
+static int current_exercise;
+static int lap;
 static const char empty[2];
 
 static void show_time(void) {
@@ -85,6 +88,10 @@ static void set_colors(const char *mode) {
     text_layer_set_text_color(lap_layer, work_text);
     text_layer_set_background_color(next_layer, work_bg);
     text_layer_set_text_color(next_layer, work_text);
+#ifdef PBL_HEALTH
+    text_layer_set_background_color(hr_layer, work_bg);
+    text_layer_set_text_color(hr_layer, work_text);
+#endif    
   }
   else {
     window_set_background_color(window, rest_bg);
@@ -96,6 +103,10 @@ static void set_colors(const char *mode) {
     text_layer_set_text_color(lap_layer, rest_text);
     text_layer_set_background_color(next_layer, rest_bg);
     text_layer_set_text_color(next_layer, rest_text);
+#ifdef PBL_HEALTH
+    text_layer_set_background_color(hr_layer, rest_bg);
+    text_layer_set_text_color(hr_layer, rest_text);
+#endif    
   }
 }
 
@@ -315,6 +326,13 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(next_layer));
 
+#ifdef PBL_HEALTH
+  hr_layer = text_layer_create(GRect(0, 0, bounds.size.w, 24));
+  text_layer_set_font(hr_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(hr_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(hr_layer));
+#endif
+
   reset();
 }
 
@@ -324,6 +342,17 @@ static void window_unload(Window *window) {
   text_layer_destroy(next_layer);
   text_layer_destroy(lap_layer);
 }
+
+#ifdef PBL_HEALTH
+static void prv_on_health_data(HealthEventType type, void *context) {
+  if (type == HealthEventHeartRateUpdate) {
+    HealthValue heart_rate = health_service_peek_current_value(HealthMetricHeartRateBPM);
+    static char s_hrm_buffer[8];
+    snprintf(s_hrm_buffer, sizeof(s_hrm_buffer), "%lu BPM", (uint32_t) heart_rate);
+    text_layer_set_text(hr_layer, s_hrm_buffer);
+  }
+}
+#endif
 
 static void init(void) {
   app_message_register_inbox_received(in_received_handler);
@@ -343,6 +372,10 @@ static void init(void) {
   work_text = GColorWhite;
 #endif
 
+#ifdef PBL_HEALTH
+  health_service_events_subscribe(prv_on_health_data, NULL);
+#endif
+  
   working = 0;
   resting = 0;
   repeats = 0;
