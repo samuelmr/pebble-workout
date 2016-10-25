@@ -5,7 +5,8 @@
     "name": "work-out",
     "pebble": {
         "capabilities": [
-            "configurable"
+            "configurable",
+            "health"
         ],
         "displayName": "Work Out",
         "enableMultiJS": true,

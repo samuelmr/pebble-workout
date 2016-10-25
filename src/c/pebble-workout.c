@@ -304,34 +304,34 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
 
-  int top_margin = (bounds.size.h - 125)/2;
-
-  lap_layer = text_layer_create(GRect(0, top_margin, bounds.size.w, 20));
-  text_layer_set_font(lap_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-  text_layer_set_text_alignment(lap_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(lap_layer));
-
-  time_layer = text_layer_create(GRect(0, top_margin+20, bounds.size.w, 50));
-  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-  text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(time_layer));
-
-  exercise_layer = text_layer_create(GRect(0, top_margin+70, bounds.size.w, 30));
-  text_layer_set_font(exercise_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_text_alignment(exercise_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(exercise_layer));
-
-  next_layer = text_layer_create(GRect(0, top_margin+100, bounds.size.w, bounds.size.h-(top_margin+110)));
-  text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(next_layer));
+  int top_margin = (bounds.size.h - 160)/2;
 
 #ifdef PBL_HEALTH
-  hr_layer = text_layer_create(GRect(0, 0, bounds.size.w, 24));
+  hr_layer = text_layer_create(GRect(0, top_margin, bounds.size.w, 30));
   text_layer_set_font(hr_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(hr_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(hr_layer));
 #endif
+
+  lap_layer = text_layer_create(GRect(0, top_margin+30, bounds.size.w, 20));
+  text_layer_set_font(lap_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_text_alignment(lap_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(lap_layer));
+
+  time_layer = text_layer_create(GRect(0, top_margin+50, bounds.size.w, 50));
+  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+  text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(time_layer));
+
+  exercise_layer = text_layer_create(GRect(0, top_margin+100, bounds.size.w, 30));
+  text_layer_set_font(exercise_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(exercise_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(exercise_layer));
+
+  next_layer = text_layer_create(GRect(0, top_margin+130, bounds.size.w, bounds.size.h-(top_margin+130)));
+  text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+  text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(next_layer));
 
   reset();
 }
