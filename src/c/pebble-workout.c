@@ -141,6 +141,7 @@ static void timer_callback(void *data) {
 static void reset(void) {
   if (timer) {
     app_timer_cancel(timer);
+    timer = NULL;
   }
   working = 0;
   resting = 0;
@@ -180,6 +181,7 @@ static void start_or_pause(ClickRecognizerRef recognizer, void *context) {
     paused = 1;
     if (timer) {
       app_timer_cancel(timer);
+      timer = NULL;
     }
     text_layer_set_text(next_layer, "SEL to continue");
   }
@@ -198,6 +200,7 @@ static void skip_back(ClickRecognizerRef recognizer, void *context) {
   vibes_short_pulse();
   if (timer) {
     app_timer_cancel(timer);
+    timer = NULL;
   }
   if ((seconds == default_work) && ((lap > 1) || (current_exercise > 1))) {
     current_exercise--;
@@ -325,7 +328,8 @@ static void window_unload(Window *window) {
 static void init(void) {
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
-  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  // app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  app_message_open(1024, 32);
 
 #ifdef PBL_COLOR
   rest_bg = GColorDukeBlue;
@@ -367,7 +371,27 @@ static void init(void) {
   window_stack_push(window, animated);
 }
 
+static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit, void *context) {
+  static char message[80];
+  time_t t = time(NULL);
+  struct tm *tms;
+  tms = localtime(&t);
+  strftime(message, sizeof(message), "Last used %b %d %H:%M", tms);
+  const AppGlanceSlice slice = (AppGlanceSlice) {
+    .layout = {
+      .icon = APP_GLANCE_SLICE_DEFAULT_ICON,
+      .subtitle_template_string = message
+    },
+    .expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION
+  };
+  AppGlanceResult result = app_glance_add_slice(session, slice);
+  if (result != APP_GLANCE_RESULT_SUCCESS) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error adding AppGlanceSlice: %d", result);
+  }
+}
+
 static void deinit(void) {
+  app_glance_reload(prv_update_app_glance, NULL);
   window_destroy(window);
 }
 

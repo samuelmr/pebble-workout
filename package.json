@@ -1,0 +1,41 @@
+{
+    "author": "Samuel Rinnetmaki",
+    "dependencies": {},
+    "keywords": [],
+    "name": "work-out",
+    "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
+        "displayName": "Work Out",
+        "enableMultiJS": true,
+        "messageKeys": {
+            "dummy": 0
+        },
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "images/icon25.png",
+                    "menuIcon": true,
+                    "name": "ICON",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk",
+            "diorite",
+            "emery"
+        ],
+        "uuid": "d3321e7e-4f5c-410f-970a-fd881f35f660",
+        "watchapp": {
+            "watchface": false
+        }
+    },
+    "version": "1.12.0"
+}
