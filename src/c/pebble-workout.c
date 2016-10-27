@@ -8,7 +8,10 @@ static TextLayer *lap_layer;
 static TextLayer *next_layer;
 static AppTimer *timer;
 static const uint16_t timer_interval_ms = 1000;
-
+#ifdef PBL_HEALTH
+static TextLayer *hr_layer;
+#endif
+  
 enum MessageKey {
   WORK = 0,      // TUPLE_INT
   REST = 1,      // TUPLE_INT
@@ -16,26 +19,26 @@ enum MessageKey {
   EXERCISES = 3,  // TUPLE_INT
 };
 
-int seconds;
-int default_work;
-int default_rest;
-int default_repeat;
-char *time_key;
+static int seconds;
+static int default_work;
+static int default_rest;
+static int default_repeat;
+static char *time_key;
 static const char work[5] = "work";
 static const char rest[5] = "rest";
-int working;
-int resting;
-int paused;
-int repeats;
-GColor work_bg;
-GColor work_text;
-GColor rest_bg;
-GColor rest_text;
+static int working;
+static int resting;
+static int paused;
+static int repeats;
+static GColor work_bg;
+static GColor work_text;
+static GColor rest_bg;
+static GColor rest_text;
 
-char exercise[MAX_EXERCISES][EXERCISE_LENGTH];
-int exercises;
-int current_exercise;
-int lap;
+static char exercise[MAX_EXERCISES][EXERCISE_LENGTH];
+static int exercises;
+static int current_exercise;
+static int lap;
 static const char empty[2];
 
 static void show_time(void) {
@@ -85,6 +88,10 @@ static void set_colors(const char *mode) {
     text_layer_set_text_color(lap_layer, work_text);
     text_layer_set_background_color(next_layer, work_bg);
     text_layer_set_text_color(next_layer, work_text);
+#ifdef PBL_HEALTH
+    text_layer_set_background_color(hr_layer, work_bg);
+    text_layer_set_text_color(hr_layer, work_text);
+#endif    
   }
   else {
     window_set_background_color(window, rest_bg);
@@ -96,6 +103,10 @@ static void set_colors(const char *mode) {
     text_layer_set_text_color(lap_layer, rest_text);
     text_layer_set_background_color(next_layer, rest_bg);
     text_layer_set_text_color(next_layer, rest_text);
+#ifdef PBL_HEALTH
+    text_layer_set_background_color(hr_layer, rest_bg);
+    text_layer_set_text_color(hr_layer, rest_text);
+#endif    
   }
 }
 
@@ -141,6 +152,7 @@ static void timer_callback(void *data) {
 static void reset(void) {
   if (timer) {
     app_timer_cancel(timer);
+    timer = NULL;
   }
   working = 0;
   resting = 0;
@@ -180,6 +192,7 @@ static void start_or_pause(ClickRecognizerRef recognizer, void *context) {
     paused = 1;
     if (timer) {
       app_timer_cancel(timer);
+      timer = NULL;
     }
     text_layer_set_text(next_layer, "SEL to continue");
   }
@@ -198,6 +211,7 @@ static void skip_back(ClickRecognizerRef recognizer, void *context) {
   vibes_short_pulse();
   if (timer) {
     app_timer_cancel(timer);
+    timer = NULL;
   }
   if ((seconds == default_work) && ((lap > 1) || (current_exercise > 1))) {
     current_exercise--;
@@ -290,24 +304,31 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
 
-  int top_margin = (bounds.size.h - 125)/2;
+  int top_margin = (bounds.size.h - 160)/2;
 
-  lap_layer = text_layer_create(GRect(0, top_margin, bounds.size.w, 20));
+#ifdef PBL_HEALTH
+  hr_layer = text_layer_create(GRect(0, top_margin, bounds.size.w, 30));
+  text_layer_set_font(hr_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(hr_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(hr_layer));
+#endif
+
+  lap_layer = text_layer_create(GRect(0, top_margin+30, bounds.size.w, 20));
   text_layer_set_font(lap_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(lap_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(lap_layer));
 
-  time_layer = text_layer_create(GRect(0, top_margin+20, bounds.size.w, 50));
+  time_layer = text_layer_create(GRect(0, top_margin+50, bounds.size.w, 50));
   text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(time_layer));
 
-  exercise_layer = text_layer_create(GRect(0, top_margin+70, bounds.size.w, 30));
+  exercise_layer = text_layer_create(GRect(0, top_margin+100, bounds.size.w, 30));
   text_layer_set_font(exercise_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(exercise_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(exercise_layer));
 
-  next_layer = text_layer_create(GRect(0, top_margin+100, bounds.size.w, bounds.size.h-(top_margin+110)));
+  next_layer = text_layer_create(GRect(0, top_margin+130, bounds.size.w, bounds.size.h-(top_margin+130)));
   text_layer_set_font(next_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   text_layer_set_text_alignment(next_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(next_layer));
@@ -322,10 +343,22 @@ static void window_unload(Window *window) {
   text_layer_destroy(lap_layer);
 }
 
+#ifdef PBL_HEALTH
+static void prv_on_health_data(HealthEventType type, void *context) {
+  if (type == HealthEventHeartRateUpdate) {
+    HealthValue heart_rate = health_service_peek_current_value(HealthMetricHeartRateBPM);
+    static char s_hrm_buffer[8];
+    snprintf(s_hrm_buffer, sizeof(s_hrm_buffer), "%lu BPM", (uint32_t) heart_rate);
+    text_layer_set_text(hr_layer, s_hrm_buffer);
+  }
+}
+#endif
+
 static void init(void) {
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
-  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  // app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  app_message_open(1024, 32);
 
 #ifdef PBL_COLOR
   rest_bg = GColorDukeBlue;
@@ -339,6 +372,10 @@ static void init(void) {
   work_text = GColorWhite;
 #endif
 
+#ifdef PBL_HEALTH
+  health_service_events_subscribe(prv_on_health_data, NULL);
+#endif
+  
   working = 0;
   resting = 0;
   repeats = 0;
@@ -367,7 +404,27 @@ static void init(void) {
   window_stack_push(window, animated);
 }
 
+static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit, void *context) {
+  static char message[80];
+  time_t t = time(NULL);
+  struct tm *tms;
+  tms = localtime(&t);
+  strftime(message, sizeof(message), "Last used %b %d %H:%M", tms);
+  const AppGlanceSlice slice = (AppGlanceSlice) {
+    .layout = {
+      .icon = APP_GLANCE_SLICE_DEFAULT_ICON,
+      .subtitle_template_string = message
+    },
+    .expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION
+  };
+  AppGlanceResult result = app_glance_add_slice(session, slice);
+  if (result != APP_GLANCE_RESULT_SUCCESS) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error adding AppGlanceSlice: %d", result);
+  }
+}
+
 static void deinit(void) {
+  app_glance_reload(prv_update_app_glance, NULL);
   window_destroy(window);
 }
 
